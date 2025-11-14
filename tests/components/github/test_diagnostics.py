@@ -5,7 +5,12 @@ import json
 from aiogithubapi import GitHubException
 import pytest
 
-from homeassistant.components.github.const import CONF_REPOSITORIES, DOMAIN
+from homeassistant.components.github.const import (
+    CONF_REPOSITORIES,
+    CONF_UPDATE_INTERVAL,
+    DEFAULT_WORKFLOW_UPDATE_INTERVAL_MINUTES,
+    DOMAIN,
+)
 from homeassistant.core import HomeAssistant
 
 from .common import setup_github_integration
@@ -54,13 +59,16 @@ async def test_entry_diagnostics(
     )
 
     assert result["options"]["repositories"] == ["home-assistant/core"]
+    assert (
+        result["options"][CONF_UPDATE_INTERVAL]
+        == DEFAULT_WORKFLOW_UPDATE_INTERVAL_MINUTES
+    )
     assert result["rate_limit"] == {
         "resources": {"core": {"remaining": 100, "limit": 100}}
     }
-    assert (
-        result["repositories"]["home-assistant/core"]["full_name"]
-        == "home-assistant/core"
-    )
+    repository_data = result["repositories"]["home-assistant/core"]
+    assert repository_data["repository"]["full_name"] == "home-assistant/core"
+    assert repository_data["workflows"]["total_count"] == 12
 
 
 # This tests needs to be adjusted to remove lingering tasks

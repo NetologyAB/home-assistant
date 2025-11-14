@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import json
 
-from homeassistant.components.github.const import CONF_REPOSITORIES, DOMAIN
+from homeassistant.components.github.const import (
+    CONF_REPOSITORIES,
+    DOMAIN,
+    WORKFLOW_RUNS_CACHE_SIZE,
+)
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 
@@ -36,6 +40,14 @@ async def setup_github_integration(
         aioclient_mock.get(
             f"https://api.github.com/repos/{repository}/events",
             json=[],
+            headers=headers,
+        )
+        aioclient_mock.get(
+            f"https://api.github.com/repos/{repository}/actions/runs",
+            params={"per_page": WORKFLOW_RUNS_CACHE_SIZE, "page": 1},
+            json=json.loads(
+                await async_load_fixture(hass, "workflow_runs.json", DOMAIN)
+            ),
             headers=headers,
         )
     aioclient_mock.post(

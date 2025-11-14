@@ -1,0 +1,65 @@
+{
+  "total_count": 12,
+  "workflow_runs": [
+    {
+      "id": 101,
+      "name": "CI",
+      "display_title": "CI #101",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/octocat/Hello-World/actions/runs/101",
+      "event": "push",
+      "updated_at": "2024-07-01T10:00:00Z",
+      "head_branch": "main",
+      "run_number": 101
+    },
+    {
+      "id": 102,
+      "name": "Docs",
+      "display_title": "Docs #55",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/octocat/Hello-World/actions/runs/102",
+      "event": "pull_request",
+      "updated_at": "2024-07-01T09:00:00Z",
+      "head_branch": "docs",
+      "run_number": 55
+    },
+    {
+      "id": 103,
+      "name": "Release",
+      "display_title": "Release",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "html_url": "https://github.com/octocat/Hello-World/actions/runs/103",
+      "event": "workflow_dispatch",
+      "updated_at": "2024-07-01T08:00:00Z",
+      "head_branch": "release",
+      "run_number": 33
+    },
+    {
+      "id": 104,
+      "name": "CI",
+      "display_title": "CI #100",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/octocat/Hello-World/actions/runs/104",
+      "event": "push",
+      "updated_at": "2024-06-30T12:00:00Z",
+      "head_branch": "main",
+      "run_number": 100
+    },
+    {
+      "id": 105,
+      "name": "CI",
+      "display_title": "CI #99",
+      "status": "in_progress",
+      "conclusion": null,
+      "html_url": "https://github.com/octocat/Hello-World/actions/runs/105",
+      "event": "workflow_dispatch",
+      "updated_at": "2024-06-30T11:00:00Z",
+      "head_branch": "feature",
+      "run_number": 99
+    }
+  ]
+}
