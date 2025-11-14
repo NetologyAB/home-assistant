@@ -30,12 +30,14 @@ from .coordinator import (
     GitHubRepositoryRuntimeData,
     GitHubWorkflowUpdateCoordinator,
 )
+from .panel import async_register_workflow_panel
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: GithubConfigEntry) -> bool:
     """Set up GitHub from a config entry."""
+    await async_register_workflow_panel(hass)
     session = async_get_clientsession(hass)
     client = GitHubAPI(
         token=entry.data[CONF_ACCESS_TOKEN],

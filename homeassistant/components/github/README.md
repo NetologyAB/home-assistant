@@ -20,3 +20,19 @@ need faster or slower polling of the GitHub Actions API.
 
 These additions reuse the existing OAuth token configured for the GitHub
 integration and cache responses with ETag support to minimize API calls.
+
+## Workflow Activity panel
+
+A new **GitHub Workflows** sidebar entry is installed automatically. The panel
+uses the cached workflow data from the two sensors so opening it never triggers
+an additional API request. For every tracked repository you will see:
+
+- A status label (success, failure, or in-progress) that can be clicked to
+  reveal the latest five workflow runs.
+- Each run expands to show the event type, branch, last updated timestamp, and a
+  button that opens the run directly on GitHub.
+- A friendly "No Workflow Activity" message if a repository does not yet have
+  any cached workflow history.
+
+Use the **Refresh data** button in the panel if you want to request the latest
+cached results from Home Assistant without waiting for the next polling cycle.
