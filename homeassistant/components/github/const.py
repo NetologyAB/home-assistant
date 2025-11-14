@@ -33,6 +33,10 @@ NO_WORKFLOW_ACTIVITY = "No Workflow Activity"
 WORKFLOW_PANEL_FRONTEND_URL_PATH = "github-workflows"
 WORKFLOW_PANEL_MODULE_FILENAME = "github-workflows-panel.js"
 WORKFLOW_PANEL_STATIC_URL = "/github-workflows-static"
+WORKFLOW_PANEL_TITLE = "Workflow Activity"
+WORKFLOW_PANEL_DESCRIPTION = (
+    "View cached GitHub Actions workflow runs without additional API calls."
+)
 WORKFLOW_WEBSOCKET_TYPE = f"{DOMAIN}/workflow_runs"
 
 DATA_FRONTEND = "frontend"

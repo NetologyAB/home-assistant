@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import pytest
 
+from homeassistant.components import frontend
 from homeassistant.components.github.const import (
+    DOMAIN,
     NO_WORKFLOW_ACTIVITY,
+    WORKFLOW_PANEL_FRONTEND_URL_PATH,
+    WORKFLOW_PANEL_TITLE,
     WORKFLOW_RUNS_CACHE_SIZE,
     WORKFLOW_WEBSOCKET_TYPE,
 )
@@ -75,3 +79,21 @@ async def test_workflow_runs_websocket_handles_empty_data(
     repositories = response["result"]["repositories"]
     assert len(repositories) == 1
     assert repositories[0]["status_message"] == NO_WORKFLOW_ACTIVITY
+
+
+@pytest.mark.usefixtures("init_integration")
+async def test_workflow_panel_registers_card(hass: HomeAssistant) -> None:
+    """Ensure the Activity card is registered on the integration page."""
+
+    panels = hass.data[frontend.DATA_PANELS]
+    assert WORKFLOW_PANEL_FRONTEND_URL_PATH in panels
+
+    panel = panels[WORKFLOW_PANEL_FRONTEND_URL_PATH]
+    assert panel.component_name == "custom"
+    assert panel.config_panel_domain == DOMAIN
+    assert panel.sidebar_title == WORKFLOW_PANEL_TITLE
+    assert panel.sidebar_default_visible is False
+    assert panel.config["title"] == WORKFLOW_PANEL_TITLE
+    assert panel.config["description"]
+    panel_config = panel.config["_panel_custom"]
+    assert panel_config["name"] == "github-workflow-panel"

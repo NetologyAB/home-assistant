@@ -7,7 +7,7 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.components import panel_custom, websocket_api
+from homeassistant.components import frontend, websocket_api
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
@@ -23,6 +23,8 @@ from .const import (
     WORKFLOW_PANEL_FRONTEND_URL_PATH,
     WORKFLOW_PANEL_MODULE_FILENAME,
     WORKFLOW_PANEL_STATIC_URL,
+    WORKFLOW_PANEL_DESCRIPTION,
+    WORKFLOW_PANEL_TITLE,
     WORKFLOW_WEBSOCKET_TYPE,
 )
 from .coordinator import GitHubRepositoryRuntimeData, GitHubWorkflowUpdateCoordinator
@@ -166,11 +168,23 @@ async def async_register_workflow_panel(hass: HomeAssistant) -> None:
             assets_ready = True
 
     if assets_ready and not frontend_data.get(DATA_FRONTEND_PANEL_REGISTERED):
-        await panel_custom.async_register_panel(
-            hass=hass,
+        frontend.async_register_built_in_panel(
+            hass,
+            component_name="custom",
+            sidebar_title=WORKFLOW_PANEL_TITLE,
+            sidebar_icon="mdi:github",
+            sidebar_default_visible=False,
             frontend_url_path=WORKFLOW_PANEL_FRONTEND_URL_PATH,
-            webcomponent_name="github-workflow-panel",
-            module_url=f"{WORKFLOW_PANEL_STATIC_URL}/{WORKFLOW_PANEL_MODULE_FILENAME}",
+            config={
+                "title": WORKFLOW_PANEL_TITLE,
+                "description": WORKFLOW_PANEL_DESCRIPTION,
+                "_panel_custom": {
+                    "name": "github-workflow-panel",
+                    "module_url": f"{WORKFLOW_PANEL_STATIC_URL}/{WORKFLOW_PANEL_MODULE_FILENAME}",
+                    "embed_iframe": False,
+                    "trust_external": False,
+                },
+            },
             config_panel_domain=DOMAIN,
         )
         frontend_data[DATA_FRONTEND_PANEL_REGISTERED] = True
