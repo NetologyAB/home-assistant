@@ -21,11 +21,13 @@ need faster or slower polling of the GitHub Actions API.
 These additions reuse the existing OAuth token configured for the GitHub
 integration and cache responses with ETag support to minimize API calls.
 
-## Workflow Activity panel
+## Workflow Activity card
 
-A new **GitHub Workflows** sidebar entry is installed automatically. The panel
-uses the cached workflow data from the two sensors so opening it never triggers
-an additional API request. For every tracked repository you will see:
+The GitHub integration page now exposes an **Activity** card alongside the
+existing Service info, Automations, Scenes, Scripts, Sensors, and Diagnostics
+cards. The card opens a focused GitHub Workflows view that uses the cached
+workflow data from the two sensors so opening it never triggers an additional
+API request. For every tracked repository you will see:
 
 - A status label (success, failure, or in-progress) that can be clicked to
   reveal the latest five workflow runs.

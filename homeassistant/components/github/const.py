@@ -32,8 +32,6 @@ NO_WORKFLOW_ACTIVITY = "No Workflow Activity"
 
 WORKFLOW_PANEL_FRONTEND_URL_PATH = "github-workflows"
 WORKFLOW_PANEL_MODULE_FILENAME = "github-workflows-panel.js"
-WORKFLOW_PANEL_SIDEBAR_TITLE = "GitHub Workflows"
-WORKFLOW_PANEL_SIDEBAR_ICON = "mdi:source-branch"
 WORKFLOW_PANEL_STATIC_URL = "/github-workflows-static"
 WORKFLOW_WEBSOCKET_TYPE = f"{DOMAIN}/workflow_runs"
 

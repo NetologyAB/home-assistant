@@ -22,8 +22,6 @@ from .const import (
     NO_WORKFLOW_ACTIVITY,
     WORKFLOW_PANEL_FRONTEND_URL_PATH,
     WORKFLOW_PANEL_MODULE_FILENAME,
-    WORKFLOW_PANEL_SIDEBAR_ICON,
-    WORKFLOW_PANEL_SIDEBAR_TITLE,
     WORKFLOW_PANEL_STATIC_URL,
     WORKFLOW_WEBSOCKET_TYPE,
 )
@@ -172,8 +170,6 @@ async def async_register_workflow_panel(hass: HomeAssistant) -> None:
             hass=hass,
             frontend_url_path=WORKFLOW_PANEL_FRONTEND_URL_PATH,
             webcomponent_name="github-workflow-panel",
-            sidebar_title=WORKFLOW_PANEL_SIDEBAR_TITLE,
-            sidebar_icon=WORKFLOW_PANEL_SIDEBAR_ICON,
             module_url=f"{WORKFLOW_PANEL_STATIC_URL}/{WORKFLOW_PANEL_MODULE_FILENAME}",
             config_panel_domain=DOMAIN,
         )
