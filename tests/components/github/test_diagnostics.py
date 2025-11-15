@@ -57,10 +57,9 @@ async def test_entry_diagnostics(
     assert result["rate_limit"] == {
         "resources": {"core": {"remaining": 100, "limit": 100}}
     }
-    assert (
-        result["repositories"]["home-assistant/core"]["full_name"]
-        == "home-assistant/core"
-    )
+    repository_data = result["repositories"]["home-assistant/core"]
+    assert repository_data["repository"]["full_name"] == "home-assistant/core"
+    assert repository_data["workflow_runs"]["total_count"] == 2
 
 
 # This tests needs to be adjusted to remove lingering tasks

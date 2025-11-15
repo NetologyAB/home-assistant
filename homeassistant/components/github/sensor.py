@@ -19,7 +19,12 @@ from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import GithubConfigEntry, GitHubDataUpdateCoordinator
+from .coordinator import (
+    GithubConfigEntry,
+    GitHubDataUpdateCoordinator,
+    GitHubRepositoryRuntimeData,
+    GitHubWorkflowRunsDataUpdateCoordinator,
+)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -142,14 +147,17 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up GitHub sensor based on a config entry."""
-    repositories = entry.runtime_data
-    async_add_entities(
-        (
-            GitHubSensorEntity(coordinator, description)
-            for description in SENSOR_DESCRIPTIONS
-            for coordinator in repositories.values()
-        ),
+    repositories: dict[str, GitHubRepositoryRuntimeData] = entry.runtime_data
+    entities: list[SensorEntity] = [
+        GitHubSensorEntity(runtime_data.repository_coordinator, description)
+        for description in SENSOR_DESCRIPTIONS
+        for runtime_data in repositories.values()
+    ]
+    entities.extend(
+        GitHubWorkflowRunsSensor(runtime_data.workflow_coordinator)
+        for runtime_data in repositories.values()
     )
+    async_add_entities(entities)
 
 
 class GitHubSensorEntity(CoordinatorEntity[GitHubDataUpdateCoordinator], SensorEntity):
@@ -197,3 +205,53 @@ class GitHubSensorEntity(CoordinatorEntity[GitHubDataUpdateCoordinator], SensorE
     def extra_state_attributes(self) -> Mapping[str, Any] | None:
         """Return the extra state attributes."""
         return self.entity_description.attr_fn(self.coordinator.data)
+
+
+class GitHubWorkflowRunsSensor(
+    CoordinatorEntity[GitHubWorkflowRunsDataUpdateCoordinator], SensorEntity
+):
+    """Sensor exposing workflow run information."""
+
+    _attr_attribution = "Data provided by the GitHub API"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_has_entity_name = True
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_translation_key = "workflow_runs"
+
+    def __init__(self, coordinator: GitHubWorkflowRunsDataUpdateCoordinator) -> None:
+        """Initialize the workflow run sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.repository}_workflow_runs"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, coordinator.repository)},
+            name=coordinator.repository,
+            manufacturer="GitHub",
+            configuration_url=f"https://github.com/{coordinator.repository}",
+            entry_type=DeviceEntryType.SERVICE,
+        )
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the number of tracked workflow runs."""
+        data = self.coordinator.data or {}
+        return data.get("total_count", 0)
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any] | None:
+        """Return the workflow run attributes."""
+        data = self.coordinator.data or {}
+        runs: list[Mapping[str, Any]] = []
+        for run in data.get("workflow_runs", []):
+            runs.append(
+                {
+                    "name": run.get("name") or run.get("display_title"),
+                    "branch": run.get("branch"),
+                    "status": run.get("status"),
+                    "conclusion": run.get("conclusion"),
+                    "url": run.get("html_url"),
+                    "event": run.get("event"),
+                    "run_number": run.get("run_number"),
+                    "run_attempt": run.get("run_attempt"),
+                }
+            )
+        return {"runs": runs}

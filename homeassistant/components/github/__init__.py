@@ -1,6 +1,7 @@
 """The GitHub integration."""
-
 from __future__ import annotations
+
+import asyncio
 
 from aiogithubapi import GitHubAPI
 
@@ -13,16 +14,22 @@ from homeassistant.helpers.aiohttp_client import (
 )
 
 from .const import CONF_REPOSITORIES, DOMAIN, LOGGER
-from .coordinator import GithubConfigEntry, GitHubDataUpdateCoordinator
+from .coordinator import (
+    GithubConfigEntry,
+    GitHubDataUpdateCoordinator,
+    GitHubRepositoryRuntimeData,
+    GitHubWorkflowRunsDataUpdateCoordinator,
+)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: GithubConfigEntry) -> bool:
     """Set up GitHub from a config entry."""
+    session = async_get_clientsession(hass)
     client = GitHubAPI(
         token=entry.data[CONF_ACCESS_TOKEN],
-        session=async_get_clientsession(hass),
+        session=session,
         client_name=SERVER_SOFTWARE,
     )
 
@@ -30,19 +37,32 @@ async def async_setup_entry(hass: HomeAssistant, entry: GithubConfigEntry) -> bo
 
     entry.runtime_data = {}
     for repository in repositories:
-        coordinator = GitHubDataUpdateCoordinator(
+        repository_coordinator = GitHubDataUpdateCoordinator(
             hass=hass,
             config_entry=entry,
             client=client,
             repository=repository,
         )
+        workflow_coordinator = GitHubWorkflowRunsDataUpdateCoordinator(
+            hass,
+            config_entry=entry,
+            session=session,
+            token=entry.data[CONF_ACCESS_TOKEN],
+            repository=repository,
+        )
 
-        await coordinator.async_config_entry_first_refresh()
+        await asyncio.gather(
+            repository_coordinator.async_config_entry_first_refresh(),
+            workflow_coordinator.async_config_entry_first_refresh(),
+        )
 
         if not entry.pref_disable_polling:
-            await coordinator.subscribe()
+            await repository_coordinator.subscribe()
 
-        entry.runtime_data[repository] = coordinator
+        entry.runtime_data[repository] = GitHubRepositoryRuntimeData(
+            repository_coordinator=repository_coordinator,
+            workflow_coordinator=workflow_coordinator,
+        )
 
     async_cleanup_device_registry(hass=hass, entry=entry)
 
@@ -82,7 +102,7 @@ def async_cleanup_device_registry(
 async def async_unload_entry(hass: HomeAssistant, entry: GithubConfigEntry) -> bool:
     """Unload a config entry."""
     repositories = entry.runtime_data
-    for coordinator in repositories.values():
-        coordinator.unsubscribe()
+    for runtime_data in repositories.values():
+        runtime_data.repository_coordinator.unsubscribe()
 
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

@@ -14,6 +14,7 @@ from tests.common import MockConfigEntry, async_fire_time_changed, async_load_fi
 from tests.test_util.aiohttp import AiohttpClientMocker
 
 TEST_SENSOR_ENTITY = "sensor.octocat_hello_world_latest_release"
+TEST_WORKFLOW_SENSOR_ENTITY = "sensor.octocat_hello_world_workflow_runs"
 
 
 # This tests needs to be adjusted to remove lingering tasks
@@ -42,9 +43,33 @@ async def test_sensor_updates_with_empty_release_array(
         json=response_json,
         headers=headers,
     )
+    aioclient_mock.get(
+        f"https://api.github.com/repos/{TEST_REPOSITORY}/actions/runs",
+        params={"per_page": 5},
+        json=json.loads(await async_load_fixture(hass, "workflow_runs.json", DOMAIN)),
+        headers=headers,
+    )
 
     async_fire_time_changed(hass, dt_util.utcnow() + FALLBACK_UPDATE_INTERVAL)
     await hass.async_block_till_done()
 
     new_state = hass.states.get(TEST_SENSOR_ENTITY)
     assert new_state.state == "unavailable"
+
+
+@pytest.mark.parametrize("expected_lingering_tasks", [True])
+async def test_workflow_runs_sensor(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+) -> None:
+    """Validate workflow run sensor output."""
+
+    state = hass.states.get(TEST_WORKFLOW_SENSOR_ENTITY)
+    assert state is not None
+    assert state.state == "2"
+    assert "runs" in state.attributes
+    first_run = state.attributes["runs"][0]
+    assert first_run["name"] == "Deploy Backend (Elastic Beanstalk)"
+    assert first_run["branch"] == "main"
+    assert first_run["status"] == "completed"
+    assert first_run["url"].endswith("18952639482")
