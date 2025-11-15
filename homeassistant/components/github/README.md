@@ -39,3 +39,7 @@ repository you will see:
 
 Use the **Refresh data** button in the panel if you want to request the latest
 cached results from Home Assistant without waiting for the next polling cycle.
+
+> This is a dedicated Workflow Activity card that only appears inside the
+> GitHub integration. It does not modify or extend the default Activity UI
+> shown for other integrations.
