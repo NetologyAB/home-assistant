@@ -36,6 +36,12 @@
       },
       "subscribers_count": {
         "default": "mdi:glasses"
+      },
+      "workflow_activity": {
+        "default": "mdi:source-branch"
+      },
+      "workflow_summary": {
+        "default": "mdi:chart-timeline"
       }
     }
   }

@@ -16,6 +16,17 @@
       }
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "repositories": "Select repositories to track.",
+          "update_interval": "Workflow update interval (minutes)"
+        },
+        "title": "Configure repositories"
+      }
+    }
+  },
   "entity": {
     "sensor": {
       "discussions_count": {
@@ -59,6 +70,12 @@
       "subscribers_count": {
         "name": "Watchers",
         "unit_of_measurement": "watchers"
+      },
+      "workflow_activity": {
+        "name": "Workflow activity"
+      },
+      "workflow_summary": {
+        "name": "Workflow summary"
       }
     }
   }

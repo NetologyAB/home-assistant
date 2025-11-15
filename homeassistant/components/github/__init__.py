@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+from datetime import timedelta
+
 from aiogithubapi import GitHubAPI
 
 from homeassistant.const import CONF_ACCESS_TOKEN, Platform
@@ -11,22 +14,55 @@ from homeassistant.helpers.aiohttp_client import (
     SERVER_SOFTWARE,
     async_get_clientsession,
 )
+from homeassistant.helpers.typing import ConfigType
 
-from .const import CONF_REPOSITORIES, DOMAIN, LOGGER
-from .coordinator import GithubConfigEntry, GitHubDataUpdateCoordinator
+from .const import (
+    CONF_REPOSITORIES,
+    CONF_UPDATE_INTERVAL,
+    DEFAULT_WORKFLOW_UPDATE_INTERVAL,
+    DEFAULT_WORKFLOW_UPDATE_INTERVAL_MINUTES,
+    DOMAIN,
+    LOGGER,
+    MINIMUM_WORKFLOW_UPDATE_INTERVAL_MINUTES,
+)
+from .coordinator import (
+    GithubConfigEntry,
+    GitHubDataUpdateCoordinator,
+    GitHubRepositoryRuntimeData,
+    GitHubWorkflowUpdateCoordinator,
+)
+from .panel import async_register_workflow_panel
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up the GitHub integration."""
+    await async_register_workflow_panel(hass)
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: GithubConfigEntry) -> bool:
     """Set up GitHub from a config entry."""
+    session = async_get_clientsession(hass)
     client = GitHubAPI(
         token=entry.data[CONF_ACCESS_TOKEN],
-        session=async_get_clientsession(hass),
+        session=session,
         client_name=SERVER_SOFTWARE,
     )
 
     repositories: list[str] = entry.options[CONF_REPOSITORIES]
+    update_interval_minutes = entry.options.get(
+        CONF_UPDATE_INTERVAL, DEFAULT_WORKFLOW_UPDATE_INTERVAL_MINUTES
+    )
+    update_interval_minutes = max(
+        update_interval_minutes, MINIMUM_WORKFLOW_UPDATE_INTERVAL_MINUTES
+    )
+    update_interval = (
+        DEFAULT_WORKFLOW_UPDATE_INTERVAL
+        if update_interval_minutes == DEFAULT_WORKFLOW_UPDATE_INTERVAL_MINUTES
+        else timedelta(minutes=update_interval_minutes)
+    )
 
     entry.runtime_data = {}
     for repository in repositories:
@@ -37,12 +73,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: GithubConfigEntry) -> bo
             repository=repository,
         )
 
-        await coordinator.async_config_entry_first_refresh()
+        workflow_coordinator = GitHubWorkflowUpdateCoordinator(
+            hass=hass,
+            config_entry=entry,
+            repository=repository,
+            session=session,
+            token=entry.data[CONF_ACCESS_TOKEN],
+            update_interval=update_interval,
+        )
+
+        await asyncio.gather(
+            coordinator.async_config_entry_first_refresh(),
+            workflow_coordinator.async_config_entry_first_refresh(),
+        )
 
         if not entry.pref_disable_polling:
             await coordinator.subscribe()
 
-        entry.runtime_data[repository] = coordinator
+        entry.runtime_data[repository] = GitHubRepositoryRuntimeData(
+            repository_coordinator=coordinator,
+            workflow_coordinator=workflow_coordinator,
+        )
 
     async_cleanup_device_registry(hass=hass, entry=entry)
 
@@ -82,7 +133,7 @@ def async_cleanup_device_registry(
 async def async_unload_entry(hass: HomeAssistant, entry: GithubConfigEntry) -> bool:
     """Unload a config entry."""
     repositories = entry.runtime_data
-    for coordinator in repositories.values():
-        coordinator.unsubscribe()
+    for runtime_data in repositories.values():
+        runtime_data.repository_coordinator.unsubscribe()
 
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
