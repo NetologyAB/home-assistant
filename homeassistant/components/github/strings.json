@@ -59,6 +59,9 @@
       "subscribers_count": {
         "name": "Watchers",
         "unit_of_measurement": "watchers"
+      },
+      "workflow_runs": {
+        "name": "Workflow runs"
       }
     }
   }
