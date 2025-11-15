@@ -213,8 +213,8 @@ class GitHubWorkflowRunsSensor(
     """Sensor exposing workflow run information."""
 
     _attr_attribution = "Data provided by the GitHub API"
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_has_entity_name = True
+    _attr_entity_registry_enabled_default = True
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_translation_key = "workflow_runs"
 
