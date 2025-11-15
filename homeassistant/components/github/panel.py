@@ -185,6 +185,7 @@ async def async_register_workflow_panel(hass: HomeAssistant) -> None:
                     "trust_external": False,
                 },
             },
+            require_admin=True,
             config_panel_domain=DOMAIN,
         )
         frontend_data[DATA_FRONTEND_PANEL_REGISTERED] = True

@@ -91,6 +91,7 @@ async def test_workflow_panel_registers_card(hass: HomeAssistant) -> None:
     panel = panels[WORKFLOW_PANEL_FRONTEND_URL_PATH]
     assert panel.component_name == "custom"
     assert panel.config_panel_domain == DOMAIN
+    assert panel.require_admin is True
     assert panel.sidebar_title == WORKFLOW_PANEL_TITLE
     assert panel.sidebar_default_visible is False
     assert panel.config["title"] == WORKFLOW_PANEL_TITLE

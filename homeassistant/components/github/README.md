@@ -25,9 +25,10 @@ integration and cache responses with ETag support to minimize API calls.
 
 The GitHub integration page now exposes an **Activity** card alongside the
 existing Service info, Automations, Scenes, Scripts, Sensors, and Diagnostics
-cards. The card opens a focused GitHub Workflows view that uses the cached
-workflow data from the two sensors so opening it never triggers an additional
-API request. For every tracked repository you will see:
+cards. The card is available to Home Assistant admins and opens a focused
+GitHub Workflows view that uses the cached workflow data from the two sensors so
+opening it never triggers an additional API request. For every tracked
+repository you will see:
 
 - A status label (success, failure, or in-progress) that can be clicked to
   reveal the latest five workflow runs.
