@@ -38,7 +38,10 @@ async def async_get_config_entry_diagnostics(
     repositories = config_entry.runtime_data
     data["repositories"] = {}
 
-    for repository, coordinator in repositories.items():
-        data["repositories"][repository] = coordinator.data
+    for repository, runtime_data in repositories.items():
+        data["repositories"][repository] = {
+            "repository": runtime_data.repository_coordinator.data,
+            "workflow_runs": runtime_data.workflow_coordinator.data,
+        }
 
     return data

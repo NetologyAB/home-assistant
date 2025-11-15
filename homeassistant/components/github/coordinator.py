@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
+from dataclasses import dataclass
 from typing import Any
 
+from aiohttp import ClientError, ClientSession
 from aiogithubapi import (
     GitHubAPI,
     GitHubConnectionException,
@@ -18,7 +21,12 @@ from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import FALLBACK_UPDATE_INTERVAL, LOGGER, REFRESH_EVENT_TYPES
+from .const import (
+    FALLBACK_UPDATE_INTERVAL,
+    LOGGER,
+    REFRESH_EVENT_TYPES,
+    WORKFLOW_RUNS_UPDATE_INTERVAL,
+)
 
 GRAPHQL_REPOSITORY_QUERY = """
 query ($owner: String!, $repository: String!) {
@@ -99,7 +107,15 @@ query ($owner: String!, $repository: String!) {
 }
 """
 
-type GithubConfigEntry = ConfigEntry[dict[str, GitHubDataUpdateCoordinator]]
+@dataclass(slots=True)
+class GitHubRepositoryRuntimeData:
+    """Container for repository level coordinators."""
+
+    repository_coordinator: GitHubDataUpdateCoordinator
+    workflow_coordinator: "GitHubWorkflowRunsDataUpdateCoordinator"
+
+
+type GithubConfigEntry = ConfigEntry[dict[str, GitHubRepositoryRuntimeData]]
 
 
 class GitHubDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -170,3 +186,74 @@ class GitHubDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def unsubscribe(self, *args: Any) -> None:
         """Unsubscribe to repository events."""
         self._client.repos.events.unsubscribe(subscription_id=self._subscription_id)
+
+
+WORKFLOW_RUNS_LIMIT = 5
+
+
+class GitHubWorkflowRunsDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+    """Coordinator responsible for GitHub workflow runs."""
+
+    config_entry: GithubConfigEntry
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        *,
+        config_entry: GithubConfigEntry,
+        session: ClientSession,
+        token: str,
+        repository: str,
+    ) -> None:
+        """Initialize the workflow runs coordinator."""
+        self._session = session
+        self._token = token
+        self.repository = repository
+
+        super().__init__(
+            hass,
+            LOGGER,
+            config_entry=config_entry,
+            name=f"{repository} workflow runs",
+            update_interval=WORKFLOW_RUNS_UPDATE_INTERVAL,
+        )
+
+    async def _async_update_data(self) -> dict[str, Any]:
+        """Fetch workflow run information."""
+        owner, repository = self.repository.split("/")
+        url = f"https://api.github.com/repos/{owner}/{repository}/actions/runs"
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {self._token}",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+        params = {"per_page": WORKFLOW_RUNS_LIMIT}
+
+        try:
+            async with self._session.get(url, headers=headers, params=params) as response:
+                response.raise_for_status()
+                payload: dict[str, Any] = await response.json()
+        except (asyncio.TimeoutError, ClientError) as exception:
+            raise UpdateFailed(exception) from exception
+
+        runs = []
+        for run in payload.get("workflow_runs", [])[:WORKFLOW_RUNS_LIMIT]:
+            runs.append(
+                {
+                    "id": run.get("id"),
+                    "name": run.get("name"),
+                    "display_title": run.get("display_title"),
+                    "branch": run.get("head_branch"),
+                    "status": run.get("status"),
+                    "conclusion": run.get("conclusion"),
+                    "html_url": run.get("html_url"),
+                    "event": run.get("event"),
+                    "run_number": run.get("run_number"),
+                    "run_attempt": run.get("run_attempt"),
+                }
+            )
+
+        return {
+            "total_count": payload.get("total_count", 0),
+            "workflow_runs": runs,
+        }

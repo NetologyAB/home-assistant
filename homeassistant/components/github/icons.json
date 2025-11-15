@@ -36,6 +36,9 @@
       },
       "subscribers_count": {
         "default": "mdi:glasses"
+      },
+      "workflow_runs": {
+        "default": "mdi:run"
       }
     }
   }

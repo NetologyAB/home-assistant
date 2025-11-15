@@ -13,6 +13,7 @@ CLIENT_ID = "1440cafcc86e3ea5d6a2"
 
 DEFAULT_REPOSITORIES = ["home-assistant/core", "esphome/esphome"]
 FALLBACK_UPDATE_INTERVAL = timedelta(hours=1, minutes=30)
+WORKFLOW_RUNS_UPDATE_INTERVAL = timedelta(minutes=2)
 
 CONF_REPOSITORIES = "repositories"
 

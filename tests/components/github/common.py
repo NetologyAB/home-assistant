@@ -38,6 +38,14 @@ async def setup_github_integration(
             json=[],
             headers=headers,
         )
+        aioclient_mock.get(
+            f"https://api.github.com/repos/{repository}/actions/runs",
+            params={"per_page": 5},
+            json=json.loads(
+                await async_load_fixture(hass, "workflow_runs.json", DOMAIN)
+            ),
+            headers=headers,
+        )
     aioclient_mock.post(
         "https://api.github.com/graphql",
         json=json.loads(await async_load_fixture(hass, "graphql.json", DOMAIN)),
